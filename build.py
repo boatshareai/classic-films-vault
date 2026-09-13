@@ -67,13 +67,26 @@ CATALOGS = [
     },
 ]
 CATALOG_BY_KEY = {c["key"]: c for c in CATALOGS}
+
+# Populated by main() once the catalogs are loaded. Copy that quotes a count
+# reads it from here rather than hardcoding a number that goes stale the next
+# time a catalog changes size.
+COUNTS = {"total": 0, "classic-films-vault": 0, "blue-finch": 0, "sc-films": 0}
+
+
+def catalog_names(sep=", ", last=", and "):
+    names = [c["name"] for c in CATALOGS]
+    return sep.join(names[:-1]) + last + names[-1]
 TAGLINE = "Classic film licensing"
 
 # The licensing copy is contractual language and is reproduced verbatim.
 # The opening sentence was widened to match the actual catalog range (20 titles
 # post-date 1979), rather than trimming real inventory to fit a marketing line.
+# %(cfv)d is the live Classic Films Vault count. The paragraph describes that
+# library specifically -- the represented catalogs are covered by the separate
+# paragraph after it on the licensing page.
 LICENSING_TERMS = (
-    "Classic Films Vault represents a library of 100+ films spanning classic "
+    "Classic Films Vault represents a library of %(cfv)d films spanning classic "
     "Hollywood, international cinema, and contemporary art-house titles from "
     "the 1930s to today. Titles are available for non-exclusive licensing across "
     "streaming, broadcast, and digital platforms, with territory and term "
@@ -212,9 +225,9 @@ def page(title, body, current, depth=0, description=""):
         '<span class="cta-short">Contact</span></a>' % up
     )
     desc = description or (
-        "100+ films spanning classic Hollywood, international cinema, and "
-        "contemporary art-house titles, available for non-exclusive licensing "
-        "across streaming, broadcast, and digital."
+        "%d films across three catalogs \u2014 %s \u2014 available for licensing "
+        "across streaming, broadcast, and digital platforms."
+        % (COUNTS["total"], catalog_names())
     )
     return """<!doctype html>
 <html lang="en">
@@ -435,14 +448,15 @@ def build_home(films):
       </div>
       <div class="tile">
         <span class="label">Nothing hidden</span>
-        <span class="sub">%(licensed)d titles currently carry a non-exclusive licence
-          with another platform. They are flagged in the catalog and remain available
-          to license.</span>
+        <span class="sub">%(licensed)d Classic Films Vault titles currently carry a
+          non-exclusive licence with another platform. They are flagged in the
+          catalog and remain available to license.</span>
       </div>
       <div class="tile">
         <span class="label">Single titles to full catalog</span>
-        <span class="sub">Package one title, a themed bundle, or the whole library.
-          Tell us the volume and we&rsquo;ll come back with rates.</span>
+        <span class="sub">Package one title, a themed bundle, or explore any of our
+          three catalogs. Tell us the volume and we&rsquo;ll confirm terms per
+          title.</span>
       </div>
     </div>
     <p style="margin-top:32px">
@@ -583,7 +597,7 @@ def build_browse(films):
       <div class="filter-grid">
         <div class="field search-field">
           <label for="q">Search title or logline</label>
-          <input type="search" id="q" name="q" placeholder="e.g. Stagecoach, Holmes, uranium" autocomplete="off">
+          <input type="search" id="q" name="q" placeholder="e.g. Stagecoach, A Bronx Tale, Dragonkeeper" autocomplete="off">
         </div>
         <div class="field">
           <label for="catalog">Catalog</label>
@@ -689,6 +703,21 @@ BADGES = {
 
 def badge(status):
     return BADGES.get(status, ("badge-available", status or "Available"))
+
+
+def meta_logline(logline):
+    """Logline trimmed for a meta description: cut on a word boundary and
+    close with an ellipsis, so it never runs mid-word into the sentence that
+    follows it."""
+    if not logline:
+        return ""
+    if len(logline) <= 150:
+        return logline + " "
+    cut = logline[:150]
+    sp = cut.rfind(" ")
+    if sp > 100:
+        cut = cut[:sp]
+    return cut.rstrip(" .,;:—-") + "… "
 
 
 def build_film(f, films):
@@ -802,13 +831,9 @@ def build_film(f, films):
         body,
         "",
         depth=1,
-        description="%s%s \u2014 %srepresented by %s. Available for licensing."
-        % (
-            f["title"],
-            year,
-            (f["logline"][:150] + " ") if f["logline"] else "",
-            f["catalog_name"],
-        ),
+        description="%s%s \u2014 %sRepresented by %s. Contact us to confirm "
+        "licensing availability."
+        % (f["title"], year, meta_logline(f["logline"]), f["catalog_name"]),
     )
 
 
@@ -908,7 +933,7 @@ def build_licensing(films):
 <script src="assets/config.js"></script>
 <script src="assets/inquiry.js"></script>
 """ % {
-        "terms": e(LICENSING_TERMS),
+        "terms": e(LICENSING_TERMS % {"cfv": len(in_catalog(films, "classic-films-vault"))}),
         "total": len(films),
         "bf": len(in_catalog(films, "blue-finch")),
         "sc": len(in_catalog(films, "sc-films")),
@@ -920,8 +945,9 @@ def build_licensing(films):
         "Licensing & contact — %s" % SITE_NAME,
         body,
         "licensing.html",
-        description="Licensing terms and inquiry form for the Classic Films Vault "
-        "library of 100+ classic films.",
+        description="Licensing terms and inquiry form for %d titles across the "
+        "Classic Films Vault, Blue Finch, and SC Films International catalogs."
+        % len(films),
     )
 
 
@@ -946,8 +972,9 @@ def build_about(films):
         states which catalog it comes from.</p>
 
       <h2>Classic Films Vault</h2>
-      <p>%(cfv)d titles of classic Hollywood and international cinema,
-        concentrated in the 1930s through the 1970s. The American side runs deep
+      <p>%(cfv)d titles of classic Hollywood and international cinema, with the
+        core concentrated in the 1930s through the 1970s and a smaller set of
+        titles reaching into the 2000s and 2010s. The American side runs deep
         on genre pictures: B-westerns and singing-cowboy series, studio film noir,
         the Rathbone-era Sherlock Holmes mysteries, and the gothic horror and
         drive-in science fiction that followed them. The international side
@@ -988,6 +1015,9 @@ def build_about(films):
 
 def main():
     films = load()
+    COUNTS["total"] = len(films)
+    for c in CATALOGS:
+        COUNTS[c["key"]] = len(in_catalog(films, c["key"]))
     if os.path.isdir(DIST):
         shutil.rmtree(DIST)
     os.makedirs(os.path.join(DIST, "films"))

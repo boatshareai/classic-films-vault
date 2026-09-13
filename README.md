@@ -223,7 +223,7 @@ GitHub Pages, S3, or any web host.
 - **Build command:** `python3 build.py`
 - **Publish directory:** `dist`
 
-The whole site is ~1.3 MB including all 165 film pages. There are no external
+The whole site is ~2.8 MB including all 463 film pages. There are no external
 requests — no CDN, no web fonts, no analytics, no trackers — so it loads fast
 and needs no cookie banner as shipped. Any single page pulls one 18 KB
 stylesheet and one 20 KB logo, both cached across the whole site.
