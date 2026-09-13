@@ -6,6 +6,19 @@ and a licensing inquiry form that sends two emails.
 
 No backend, no database, no video hosting, no user accounts.
 
+**Live:** <https://boatshareai.github.io/classic-films-vault/>
+
+Every push to `main` rebuilds and redeploys via
+`.github/workflows/deploy.yml` — so updating the catalog is: edit
+`data/catalog.csv`, commit, push. You can do that in the GitHub web editor
+without cloning anything.
+
+> The inquiry form is not connected yet. GitHub Pages is static-only, so the
+> serverless handler in `functions/` has nowhere to run there. See
+> **Connecting the inquiry form** below — Option B (a form-to-email service)
+> works on Pages as-is; Option A needs a host with functions, such as
+> Cloudflare Pages.
+
 ---
 
 ## Quick start
