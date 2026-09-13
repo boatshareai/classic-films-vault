@@ -451,7 +451,8 @@ table.catalog {
   width: 100%;
   border-collapse: collapse;
   font-size: 15px;
-  min-width: 760px;
+  /* seven columns now; below this the wrapper scrolls horizontally */
+  min-width: 940px;
 }
 table.catalog th {
   text-align: left;
@@ -504,7 +505,8 @@ table.catalog .c-logline {
   color: var(--ink-soft);
   font-size: 14px;
   line-height: 1.45;
-  max-width: 420px;
+  max-width: 360px;
+  min-width: 200px;
 }
 table.catalog .c-num {
   white-space: nowrap;
@@ -838,10 +840,15 @@ table.catalog .c-num {
   }
   .nav a {
     font-size: 13px;
-    padding: 7px 6px;
+    padding: 8px 5px;
   }
   .nav .cta {
     margin-left: 2px;
+  }
+  /* Five destinations plus the CTA no longer fit on one row at 375px. The
+     logo is the home link, so the explicit Home item is the one to drop. */
+  .nav-home {
+    display: none;
   }
   /* Short label keeps the nav on one row at 375px */
   .cta-long {
@@ -856,9 +863,6 @@ table.catalog .c-num {
   }
   .site-head .wrap {
     justify-content: flex-start;
-  }
-  .nav a {
-    padding: 8px 10px;
   }
   .rule-head h1,
   .rule-head h2 {
@@ -1111,5 +1115,165 @@ table.catalog .c-num {
   /* touch devices swipe; the buttons just take up room */
   .carousel-btn {
     display: none;
+  }
+}
+
+/* ---------- represented-catalog additions ---------- */
+
+/* hero: combined total headlines, per-catalog counts stay visible under it */
+.hero-split {
+  list-style: none;
+  margin: 0 0 30px;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 28px;
+  border-top: 1px solid rgba(241, 239, 232, 0.18);
+  padding-top: 20px;
+  max-width: 46em;
+}
+.hero-split a {
+  color: var(--rule);
+  text-decoration: none;
+  font-size: 15px;
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+}
+.hero-split a:hover {
+  color: var(--light-2);
+}
+.hero-split b {
+  font-family: var(--serif);
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--brass);
+}
+
+/* catalog landing cards */
+.cat-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
+}
+.cat-card {
+  background: var(--light-2);
+  border: 1px solid var(--rule);
+  border-top: 3px solid var(--brass);
+  border-radius: 3px;
+  padding: 26px 24px 22px;
+  text-decoration: none;
+  color: var(--steel);
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow);
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+.cat-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--brass);
+  color: var(--steel);
+}
+.cat-count {
+  font-family: var(--serif);
+  font-size: 44px;
+  line-height: 1;
+  color: var(--brass-ink);
+}
+.cat-name {
+  font-family: var(--serif);
+  font-size: 21px;
+  margin: 10px 0 8px;
+  line-height: 1.2;
+}
+.cat-blurb {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+.cat-facts {
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--rule);
+}
+.cat-go {
+  margin-top: 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--brass-ink);
+}
+.cat-card:hover .cat-go {
+  text-decoration: underline;
+}
+
+/* "Represented by" on the film page — a claim about provenance, so it sits
+   next to the status badge rather than buried in the spec list */
+.rep-tag {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-left: 10px;
+  padding: 9px 14px;
+  border-radius: 3px;
+  border: 1px solid rgba(241, 239, 232, 0.28);
+  background: rgba(241, 239, 232, 0.06);
+  color: var(--light);
+  text-decoration: none;
+  font-size: 13px;
+  vertical-align: middle;
+}
+.rep-tag span {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--brass-lt);
+}
+.rep-tag:hover {
+  border-color: var(--brass);
+  color: var(--light-2);
+}
+
+/* Represented: carried by an agency, but no rights position asserted —
+   dashed to read as "to be confirmed" rather than settled. */
+.badge-represented {
+  background: transparent;
+  color: var(--brass-ink);
+  border: 1px dashed rgba(201, 161, 92, 0.75);
+}
+.film-head .badge-represented {
+  color: var(--brass-lt);
+  border-color: rgba(201, 161, 92, 0.6);
+  background: transparent;
+}
+
+.synopsis.muted {
+  color: var(--ink-soft);
+  font-style: italic;
+}
+
+table.catalog .c-rep {
+  font-size: 13.5px;
+  color: var(--ink-soft);
+  min-width: 120px;
+}
+
+@media (max-width: 860px) {
+  .rep-tag {
+    margin-left: 0;
+    margin-top: 12px;
+  }
+}
+
+@media (max-width: 620px) {
+  .hero-split {
+    gap: 8px 20px;
+  }
+  .hero-split b {
+    font-size: 20px;
+  }
+  table.catalog td.c-rep {
+    padding-top: 8px;
   }
 }

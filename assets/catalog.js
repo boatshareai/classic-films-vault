@@ -14,6 +14,7 @@
   var lang = document.getElementById("lang");
   var runtime = document.getElementById("runtime");
   var status = document.getElementById("status");
+  var catalog = document.getElementById("catalog");
 
   var sortKey = "t";
   var sortDir = 1;
@@ -26,6 +27,7 @@
     if (p.get("genre")) genre.value = p.get("genre");
     if (p.get("decade")) decade.value = p.get("decade");
     if (p.get("status")) status.value = p.get("status");
+    if (p.get("catalog")) catalog.value = p.get("catalog");
     if (p.get("intl")) lang.dataset.intl = "1";
   })();
 
@@ -45,8 +47,13 @@
         if (hay.indexOf(words[i]) === -1) return false;
       }
     }
+    if (catalog.value && f.c !== catalog.value) return false;
     if (genre.value && f.g.indexOf(genre.value) === -1) return false;
-    if (decade.value && f.d !== decade.value) return false;
+    if (decade.value === "__none") {
+      if (f.d) return false;
+    } else if (decade.value && f.d !== decade.value) {
+      return false;
+    }
 
     if (lang.dataset.intl === "1") {
       if (!f.l || f.l === "English") return false;
@@ -87,6 +94,9 @@
   // Some source synopses run a full paragraph. The table wants one scannable
   // line; the full text still shows on the film's own page.
   function oneLine(s) {
+    // Two of the three catalogs ship no loglines at all; say so rather than
+    // leaving an unexplained empty cell.
+    if (!s) return '<span class="muted">Not listed</span>';
     if (s.length <= 150) return esc(s);
     var cut = s.slice(0, 150);
     var sp = cut.lastIndexOf(" ");
@@ -94,11 +104,19 @@
     return esc(cut.replace(/[\s.,;:—-]+$/, "")) + "&hellip;";
   }
 
+  var BADGE = {
+    Available: "badge-available",
+    Licensed: "badge-licensed",
+    Represented: "badge-represented"
+  };
+
   function row(f) {
     var badge =
-      f.st === "Licensed"
-        ? '<span class="badge badge-licensed">Licensed</span>'
-        : '<span class="badge badge-available">Available</span>';
+      '<span class="badge ' +
+      (BADGE[f.st] || "badge-available") +
+      '">' +
+      esc(f.st || "Available") +
+      "</span>";
     return (
       "<tr>" +
       '<td class="c-title"><a href="films/' +
@@ -118,6 +136,9 @@
       '<td class="c-logline">' +
       oneLine(f.o) +
       "</td>" +
+      '<td class="c-rep" data-k="Represented by">' +
+      esc(f.cn) +
+      "</td>" +
       '<td class="c-status">' +
       badge +
       "</td>" +
@@ -136,7 +157,7 @@
         : "<b>" + n + "</b> of " + films.length + " titles";
   }
 
-  [q, genre, decade, lang, runtime, status].forEach(function (el) {
+  [q, catalog, genre, decade, lang, runtime, status].forEach(function (el) {
     el.addEventListener("input", function () {
       // Any explicit language choice overrides the ?intl= deep link.
       if (el === lang) delete lang.dataset.intl;
@@ -145,7 +166,7 @@
   });
 
   document.getElementById("reset").addEventListener("click", function () {
-    [q, genre, decade, lang, runtime, status].forEach(function (el) {
+    [q, catalog, genre, decade, lang, runtime, status].forEach(function (el) {
       el.value = "";
     });
     delete lang.dataset.intl;

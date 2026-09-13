@@ -30,6 +30,43 @@ DIST = os.path.join(HERE, "dist")
 SITE_BASE = os.environ.get("SITE_BASE", "").rstrip("/")
 
 SITE_NAME = "Classic Films Vault"
+
+# The three represented catalogs. Each is its own CSV so they stay
+# independently editable and one agency's data can never disturb another's --
+# data/catalog.csv in particular is the original Classic Films Vault file and
+# is not rewritten by the represented-catalog import.
+#
+# `prefix` namespaces the slugs. Classic Films Vault keeps an empty prefix so
+# its already-published URLs do not move; the newer catalogs are prefixed so
+# the 18 titles carried by both agencies get distinct pages.
+CATALOGS = [
+    {
+        "key": "classic-films-vault",
+        "name": "Classic Films Vault",
+        "file": "catalog.csv",
+        "prefix": "",
+        "blurb": "Classic Hollywood and international cinema, 1930s to today "
+                 "\u2014 westerns, noir, Rathbone-era mystery, gothic horror, "
+                 "and art-house landmarks.",
+    },
+    {
+        "key": "blue-finch",
+        "name": "Blue Finch Film Releasing",
+        "file": "blue-finch.csv",
+        "prefix": "bf",
+        "blurb": "Contemporary independent features, weighted to the 2010s "
+                 "and 2020s \u2014 led by horror, drama, and thriller.",
+    },
+    {
+        "key": "sc-films",
+        "name": "SC Films International",
+        "file": "sc-films.csv",
+        "prefix": "sc",
+        "blurb": "Live action and family animation, plus documentary and "
+                 "genre titles. Year and runtime data is largely absent.",
+    },
+]
+CATALOG_BY_KEY = {c["key"]: c for c in CATALOGS}
 TAGLINE = "Classic film licensing"
 
 # The licensing copy is contractual language and is reproduced verbatim.
@@ -102,23 +139,44 @@ def monogram(title):
 
 
 def load():
-    with open(DATA, newline="", encoding="utf-8") as fh:
-        rows = list(csv.DictReader(fh))
+    """Every published title across all three catalogs, each tagged with its
+    source catalog."""
     films = []
     skipped = 0
-    for r in rows:
-        r = {k: (v or "").strip() for k, v in r.items()}
-        # publish=no holds a title out of the public catalog without deleting it
-        if r.get("publish", "yes").lower() in ("no", "false", "0"):
-            skipped += 1
-            continue
-        r["genre_list"] = [g for g in r["genres"].split("; ") if g]
-        r["runtime_n"] = int(r["runtime"]) if r["runtime"].isdigit() else None
-        films.append(r)
+    seen_slugs = {}
+    for cat in CATALOGS:
+        path = os.path.join(HERE, "data", cat["file"])
+        if not os.path.exists(path):
+            raise SystemExit("missing catalog file: %s" % path)
+        with open(path, newline="", encoding="utf-8") as fh:
+            rows = list(csv.DictReader(fh))
+        for r in rows:
+            r = {k: (v or "").strip() for k, v in r.items() if k}
+            # publish=no holds a title out of the catalog without deleting it
+            if r.get("publish", "yes").lower() in ("no", "false", "0"):
+                skipped += 1
+                continue
+            # Genres are "; "-separated in the Classic Films Vault file and a
+            # single verbatim label in the agency files. Both land as a list.
+            r["genre_list"] = [g for g in r["genres"].split("; ") if g]
+            r["runtime_n"] = int(r["runtime"]) if r["runtime"].isdigit() else None
+            r["catalog"] = cat["key"]
+            r["catalog_name"] = cat["name"]
+            if r["slug"] in seen_slugs:
+                raise SystemExit(
+                    "duplicate slug %r in %s and %s"
+                    % (r["slug"], seen_slugs[r["slug"]], cat["file"])
+                )
+            seen_slugs[r["slug"]] = cat["file"]
+            films.append(r)
     films.sort(key=lambda f: f["title"].lower())
     if skipped:
         print("skipping %d title(s) marked publish=no" % skipped)
     return films
+
+
+def in_catalog(films, key):
+    return [f for f in films if f["catalog"] == key]
 
 
 # --------------------------------------------------------------------------
@@ -127,7 +185,8 @@ def load():
 
 NAV = [
     ("Home", "index.html"),
-    ("Catalog", "catalog.html"),
+    ("Catalogs", "catalog.html"),
+    ("Browse", "browse.html"),
     ("Licensing", "licensing.html"),
     ("About", "about.html"),
 ]
@@ -139,7 +198,8 @@ def page(title, body, current, depth=0, description=""):
     nav = []
     for label, href in NAV:
         cur = ' aria-current="page"' if href == current else ""
-        nav.append('<a href="%s%s"%s>%s</a>' % (up, href, cur, label))
+        cls = ' class="nav-home"' if href == "index.html" else ""
+        nav.append('<a href="%s%s"%s%s>%s</a>' % (up, href, cls, cur, label))
     nav.append(
         '<a class="cta" href="%slicensing.html">'
         '<span class="cta-long">Contact us for licensing</span>'
@@ -187,7 +247,7 @@ def page(title, body, current, depth=0, description=""):
   <div class="wrap">
     <div>&copy; %(year)s Classic Films Vault. Licensing inquiries only — this site does not stream or sell films.</div>
     <div class="fnav">
-      <a href="%(up)scatalog.html">Browse catalog</a>
+      <a href="%(up)sbrowse.html">Browse titles</a>
       <a href="%(up)slicensing.html">Licensing &amp; contact</a>
       <a href="%(up)sabout.html">About</a>
     </div>
@@ -244,7 +304,7 @@ def build_featured(films):
   <div class="wrap">
     <div class="featured-head">
       <h2>Featured titles</h2>
-      <a class="all-link" href="catalog.html">View all %(total)d titles &rsaquo;</a>
+      <a class="all-link" href="browse.html">View all %(total)d titles &rsaquo;</a>
     </div>
     <div class="carousel" data-carousel>
       <button type="button" class="carousel-btn prev" aria-label="Scroll featured titles left">&lsaquo;</button>
@@ -266,10 +326,10 @@ def build_home(films):
     for label, genres, sub in HIGHLIGHTS:
         if genres is None:
             count = intl
-            href = "catalog.html?intl=1"
+            href = "browse.html?intl=1"
         else:
             count = sum(1 for f in films if any(g in f["genre_list"] for g in genres))
-            href = "catalog.html?genre=" + urllib.parse.quote(genres[0])
+            href = "browse.html?genre=" + urllib.parse.quote(genres[0])
         tiles.append(
             """      <a class="tile" href="%s">
         <span class="count">%d</span>
@@ -284,24 +344,36 @@ def build_home(films):
         if f["decade"]:
             decades[f["decade"]] = decades.get(f["decade"], 0) + 1
     chips = "".join(
-        '<a class="decade-chip" href="catalog.html?decade=%s"><b>%d</b> from the %s</a>'
+        '<a class="decade-chip" href="browse.html?decade=%s"><b>%d</b> from the %s</a>'
         % (d, decades[d], d)
         for d in sorted(decades)
     )
 
     licensed = sum(1 for f in films if f["status"] == "Licensed")
 
+    # The combined number headlines, but each catalog's own count stays on the
+    # page: a buyer should never have to guess where a title comes from.
+    split = "\n".join(
+        '      <li><a href="browse.html?catalog=%s"><b>%d</b> %s</a></li>'
+        % (urllib.parse.quote(c["key"]), len(in_catalog(films, c["key"])), e(c["name"]))
+        for c in CATALOGS
+    )
+
     body = """
 <section class="hero">
   <div class="wrap">
     <p class="eyebrow">Classic Films Vault</p>
-    <h1>%(total)d classic films available for licensing</h1>
-    <p class="pitch">Classic Hollywood, international cinema, and contemporary
-      art-house titles from the 1930s to today &mdash; available for non-exclusive
-      licensing across streaming, broadcast, and digital platforms.</p>
+    <h1>%(total)d titles available for licensing</h1>
+    <p class="pitch">Three represented catalogs &mdash; classic Hollywood and
+      international cinema, contemporary independent features, and live action
+      and family animation &mdash; licensed across streaming, broadcast, and
+      digital platforms.</p>
+    <ul class="hero-split">
+%(split)s
+    </ul>
     <div class="hero-actions">
       <a class="btn btn-gold" href="licensing.html">Contact us for licensing</a>
-      <a class="btn btn-ghost" href="catalog.html">Browse the full catalog</a>
+      <a class="btn btn-ghost" href="catalog.html">Browse the catalogs</a>
     </div>
   </div>
 </section>
@@ -321,9 +393,16 @@ def build_home(films):
     <div class="rule-head"><h2>How licensing works</h2></div>
     <div class="tiles">
       <div class="tile">
-        <span class="label">Non-exclusive, by default</span>
-        <span class="sub">Every title in the library is offered on a non-exclusive
-          basis. Territory and term are negotiated per deal.</span>
+        <span class="label">Three catalogs, one inquiry</span>
+        <span class="sub">%(cfv)d titles in the Classic Films Vault library, plus
+          %(bf)d represented for Blue Finch Film Releasing and %(sc)d for SC Films
+          International. Every title page says which.</span>
+      </div>
+      <div class="tile">
+        <span class="label">Terms stated, not implied</span>
+        <span class="sub">Classic Films Vault titles are offered non-exclusively,
+          territory and term per deal. Agency-represented titles carry no assumed
+          position &mdash; availability is confirmed per inquiry.</span>
       </div>
       <div class="tile">
         <span class="label">Nothing hidden</span>
@@ -345,13 +424,17 @@ def build_home(films):
 <script src="assets/carousel.js"></script>
 """ % {
         "total": total,
+        "split": split,
+        "cfv": len(in_catalog(films, "classic-films-vault")),
+        "bf": len(in_catalog(films, "blue-finch")),
+        "sc": len(in_catalog(films, "sc-films")),
         "featured": build_featured(films),
         "tiles": "\n".join(tiles),
         "chips": chips,
         "licensed": licensed,
     }
     return page(
-        "Classic Films Vault — %d classic films for licensing" % total,
+        "Classic Films Vault \u2014 %d titles for licensing" % total,
         body,
         "index.html",
     )
@@ -363,12 +446,84 @@ def build_home(films):
 
 
 def build_catalog(films):
+    """Landing view: one card per represented catalog."""
+    cards = []
+    for cat in CATALOGS:
+        mine = in_catalog(films, cat["key"])
+        years = sorted(int(f["year"]) for f in mine if f["year"].isdigit())
+        span = "%d\u2013%d" % (years[0], years[-1]) if years else ""
+        top = {}
+        for f in mine:
+            for g in f["genre_list"]:
+                top[g] = top.get(g, 0) + 1
+        leading = ", ".join(
+            g for g, _ in sorted(top.items(), key=lambda kv: (-kv[1], kv[0]))[:4]
+        )
+        facts = []
+        if span:
+            facts.append("Years %s" % span)
+        if leading:
+            facts.append("Mostly %s" % leading)
+        cards.append(
+            """      <a class="cat-card" href="browse.html?catalog=%(key)s">
+        <span class="cat-count">%(n)d</span>
+        <span class="cat-name">%(name)s</span>
+        <span class="cat-blurb">%(blurb)s</span>
+        <span class="cat-facts">%(facts)s</span>
+        <span class="cat-go">Browse this catalog &rsaquo;</span>
+      </a>"""
+            % {
+                "key": e(cat["key"]),
+                "n": len(mine),
+                "name": e(cat["name"]),
+                "blurb": e(cat["blurb"]),
+                "facts": e(" \u00b7 ".join(facts)),
+            }
+        )
+
+    body = """
+<section class="section section-cream">
+  <div class="wrap">
+    <div class="rule-head"><h1>Catalogs</h1></div>
+    <p class="lede">We represent %(total)d titles across three catalogs. Pick one
+      to browse it on its own, or search the whole library at once &mdash; the
+      same filters apply either way.</p>
+
+    <div class="cat-cards">
+%(cards)s
+    </div>
+
+    <p style="margin-top:34px">
+      <a class="btn btn-solid" href="browse.html">Browse all %(total)d titles</a>
+    </p>
+  </div>
+</section>
+""" % {"cards": "\n".join(cards), "total": len(films)}
+
+    return page(
+        "Catalogs \u2014 %s" % SITE_NAME,
+        body,
+        "catalog.html",
+        description="Three represented catalogs totalling %d titles: %s."
+        % (len(films), ", ".join(c["name"] for c in CATALOGS)),
+    )
+
+
+def build_browse(films):
+    """The single browse UI, shared by every catalog."""
     genres = sorted({g for f in films for g in f["genre_list"]})
     decades = sorted({f["decade"] for f in films if f["decade"]})
     langs = sorted({f["language"] for f in films if f["language"]})
+    statuses = sorted({f["status"] for f in films if f["status"]})
 
     def opts(values):
         return "".join('<option value="%s">%s</option>' % (e(v), e(v)) for v in values)
+
+    cat_opts = "".join(
+        '<option value="%s">%s (%d)</option>'
+        % (e(c["key"]), e(c["name"]), len(in_catalog(films, c["key"])))
+        for c in CATALOGS
+    )
 
     payload = [
         {
@@ -381,6 +536,8 @@ def build_catalog(films):
             "r": f["runtime_n"],
             "o": f["logline"],
             "st": f["status"],
+            "c": f["catalog"],
+            "cn": f["catalog_name"],
         }
         for f in films
     ]
@@ -388,17 +545,20 @@ def build_catalog(films):
     body = """
 <section class="section section-cream">
   <div class="wrap">
-    <div class="rule-head"><h1>Full catalog</h1></div>
-    <p class="lede">Every title we represent &mdash; %(total)d films. Titles marked
-      <span class="badge badge-licensed">Licensed</span> currently carry a
-      non-exclusive licence with another platform and remain available to license
-      alongside it.</p>
+    <div class="rule-head"><h1>Browse titles</h1></div>
+    <p class="lede">%(total)d titles across all three catalogs.
+      <a href="catalog.html">Browse by catalog</a> instead, or filter below.
+      Every row shows which catalog represents the title.</p>
 
-    <form class="filters" id="filters" role="search" aria-label="Filter catalog">
+    <form class="filters" id="filters" role="search" aria-label="Filter titles">
       <div class="filter-grid">
         <div class="field search-field">
           <label for="q">Search title or logline</label>
           <input type="search" id="q" name="q" placeholder="e.g. Stagecoach, Holmes, uranium" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="catalog">Catalog</label>
+          <select id="catalog"><option value="">All catalogs</option>%(cats)s</select>
         </div>
         <div class="field">
           <label for="genre">Genre</label>
@@ -406,7 +566,10 @@ def build_catalog(films):
         </div>
         <div class="field">
           <label for="decade">Decade</label>
-          <select id="decade"><option value="">All decades</option>%(decades)s</select>
+          <select id="decade">
+            <option value="">All decades</option>%(decades)s
+            <option value="__none">Not listed</option>
+          </select>
         </div>
         <div class="field">
           <label for="lang">Language</label>
@@ -428,11 +591,7 @@ def build_catalog(films):
         </div>
         <div class="field">
           <label for="status">Licensing status</label>
-          <select id="status">
-            <option value="">Any status</option>
-            <option value="Available">Available</option>
-            <option value="Licensed">Licensed (non-exclusive)</option>
-          </select>
+          <select id="status"><option value="">Any status</option>%(statuses)s</select>
         </div>
       </div>
       <div class="filter-foot">
@@ -450,6 +609,7 @@ def build_catalog(films):
             <th scope="col">Genre</th>
             <th scope="col"><button type="button" data-sort="r">Runtime</button></th>
             <th scope="col">Logline</th>
+            <th scope="col">Represented by</th>
             <th scope="col">Status</th>
           </tr>
         </thead>
@@ -466,18 +626,20 @@ def build_catalog(films):
 <script src="assets/catalog.js"></script>
 """ % {
         "total": len(films),
+        "cats": cat_opts,
         "genres": opts(genres),
         "decades": opts(decades),
         "langs": opts(langs),
+        "statuses": opts(statuses),
         # </script> can't appear inside an inline JSON block.
         "json": json.dumps(payload, separators=(",", ":")).replace("<", "\\u003c"),
     }
     return page(
-        "Browse the catalog — %s" % SITE_NAME,
+        "Browse titles \u2014 %s" % SITE_NAME,
         body,
-        "catalog.html",
-        description="Search and filter all %d titles in the Classic Films Vault "
-        "library by genre, decade, language, and runtime." % len(films),
+        "browse.html",
+        description="Search and filter all %d represented titles by catalog, "
+        "genre, decade, language, and runtime." % len(films),
     )
 
 
@@ -486,13 +648,22 @@ def build_catalog(films):
 # --------------------------------------------------------------------------
 
 
+# Three rights positions, and they are not interchangeable. "Represented"
+# means exactly that: the agency carries the title. It is not a claim that the
+# title is unencumbered, which is what "Available" asserts.
+BADGES = {
+    "Available": ("badge-available", "Available"),
+    "Licensed": ("badge-licensed", "Licensed \u2014 non-exclusive"),
+    "Represented": ("badge-represented", "Represented"),
+}
+
+
+def badge(status):
+    return BADGES.get(status, ("badge-available", status or "Available"))
+
+
 def build_film(f, films):
-    badge_cls = "badge-licensed" if f["status"] == "Licensed" else "badge-available"
-    badge_txt = (
-        "Licensed — non-exclusive"
-        if f["status"] == "Licensed"
-        else "Available"
-    )
+    badge_cls, badge_txt = badge(f["status"])
 
     meta = []
     if f["year"]:
@@ -505,7 +676,14 @@ def build_film(f, films):
         meta.append(e(f["language"]))
     meta_html = '<span class="sep">/</span>'.join("<span>%s</span>" % m for m in meta)
 
-    spec = [("Year", f["year"] or "Not listed")]
+    rep = (
+        '<a class="rep-tag" href="../browse.html?catalog=%s">'
+        '<span>Represented by</span> %s</a>'
+        % (urllib.parse.quote(f["catalog"]), e(f["catalog_name"]))
+    )
+
+    spec = [("Represented by", f["catalog_name"])]
+    spec.append(("Year", f["year"] or "Not listed"))
     spec.append(("Genre", ", ".join(f["genre_list"]) or "Not listed"))
     spec.append(("Language", f["language"] or "Not specified"))
     spec.append(
@@ -521,15 +699,22 @@ def build_film(f, films):
     )
 
     tags = "".join(
-        '<a class="tag" href="../catalog.html?genre=%s">%s</a>'
+        '<a class="tag" href="../browse.html?genre=%s">%s</a>'
         % (urllib.parse.quote(g), e(g))
         for g in f["genre_list"]
     )
     if f["decade"]:
-        tags += '<a class="tag" href="../catalog.html?decade=%s">%s</a>' % (
+        tags += '<a class="tag" href="../browse.html?decade=%s">%s</a>' % (
             f["decade"],
             f["decade"],
         )
+
+    synopsis = (
+        '<p class="synopsis">%s</p>' % e(f["logline"])
+        if f["logline"]
+        else '<p class="synopsis muted">No synopsis on file for this title. '
+        'We can supply one on request.</p>'
+    )
 
     inquire = "../licensing.html?title=" + urllib.parse.quote(f["title"])
 
@@ -537,10 +722,11 @@ def build_film(f, films):
 <section class="film-head">
   <div class="wrap">
     <p class="crumbs"><a href="../index.html">Home</a> &rsaquo;
-      <a href="../catalog.html">Catalog</a> &rsaquo; %(title)s</p>
+      <a href="../browse.html">Browse</a> &rsaquo; %(title)s</p>
     <h1>%(title)s</h1>
     <div class="film-meta">%(meta)s</div>
     <span class="badge %(bcls)s badge-lg">%(btxt)s</span>
+    %(rep)s
   </div>
 </section>
 
@@ -548,7 +734,7 @@ def build_film(f, films):
   <div class="film-body">
     <div>
       <h2>Synopsis</h2>
-      <p class="synopsis">%(logline)s</p>
+      %(synopsis)s
 
       <h2>Details</h2>
       <dl class="spec">
@@ -573,7 +759,8 @@ def build_film(f, films):
         "meta": meta_html,
         "bcls": badge_cls,
         "btxt": e(badge_txt),
-        "logline": e(f["logline"]),
+        "synopsis": synopsis,
+        "rep": rep,
         "spec": spec_html,
         "tags": tags,
         "licence_note": e(f["licence_note"]),
@@ -586,8 +773,13 @@ def build_film(f, films):
         body,
         "",
         depth=1,
-        description="%s%s — %s Available for non-exclusive licensing from "
-        "Classic Films Vault." % (f["title"], year, f["logline"][:150]),
+        description="%s%s \u2014 %srepresented by %s. Available for licensing."
+        % (
+            f["title"],
+            year,
+            (f["logline"][:150] + " ") if f["logline"] else "",
+            f["catalog_name"],
+        ),
     )
 
 
@@ -607,6 +799,13 @@ def build_licensing(films):
 
     <div class="prose">
       <p>%(terms)s</p>
+      <p>Alongside that library we represent %(bf)d titles for Blue Finch Film
+        Releasing and %(sc)d for SC Films International &mdash; %(total)d titles
+        in all. The paragraph above sets out the terms for the Classic Films
+        Vault library specifically; for agency-represented titles we hold no
+        assumed rights position, and availability, territory, and terms are
+        confirmed per inquiry. Every title page states which catalog the film
+        comes from.</p>
     </div>
 
     <h3 style="font-family:var(--serif);font-size:24px;margin:44px 0 18px">Send an inquiry</h3>
@@ -681,6 +880,9 @@ def build_licensing(films):
 <script src="assets/inquiry.js"></script>
 """ % {
         "terms": e(LICENSING_TERMS),
+        "total": len(films),
+        "bf": len(in_catalog(films, "blue-finch")),
+        "sc": len(in_catalog(films, "sc-films")),
         "confirm": e(CONFIRMATION),
         "uses": opts(USE_OPTIONS),
         "vols": opts(VOLUME_OPTIONS),
@@ -700,37 +902,56 @@ def build_licensing(films):
 
 
 def build_about(films):
-    total = len(films)
-    langs = sorted({f["language"] for f in films if f["language"] and f["language"] != "English"})
+    cfv = in_catalog(films, "classic-films-vault")
+    langs = sorted(
+        {f["language"] for f in cfv if f["language"] and f["language"] != "English"}
+    )
     body = """
 <section class="section section-cream">
   <div class="wrap">
     <div class="rule-head"><h1>About the collection</h1></div>
     <div class="prose">
-      <p>Classic Films Vault is a %(total)d-title library of classic Hollywood and
-        international cinema, concentrated in the 1930s through the 1970s. The
-        American side of the collection runs deep on genre pictures: B-westerns and
-        singing-cowboy series, studio film noir, the Rathbone-era Sherlock Holmes
-        mysteries, and the gothic horror and drive-in science fiction that followed
-        them. The international side gathers landmark work from Japan, Italy, France,
-        India, China, Russia, and Spain &mdash; films by Kurosawa, Ozu, Mizoguchi,
-        Satyajit Ray, De Sica, Bu&ntilde;uel, and Tarkovsky among them.</p>
+      <p>We represent %(total)d titles across three catalogs: our own Classic
+        Films Vault library, and two agency catalogs we carry on behalf of
+        Blue Finch Film Releasing and SC Films International. Every title page
+        states which catalog it comes from.</p>
 
-      <p>The library spans %(nlang)d languages beyond English. Every title is
-        represented for non-exclusive licensing across streaming, broadcast, and
-        digital platforms, with territory and term negotiated per deal. We are a
-        licensing and distribution operation only &mdash; this site is a catalog and
-        a contact form, not a streaming service.</p>
+      <h2>Classic Films Vault</h2>
+      <p>%(cfv)d titles of classic Hollywood and international cinema,
+        concentrated in the 1930s through the 1970s. The American side runs deep
+        on genre pictures: B-westerns and singing-cowboy series, studio film noir,
+        the Rathbone-era Sherlock Holmes mysteries, and the gothic horror and
+        drive-in science fiction that followed them. The international side
+        gathers landmark work from Japan, Italy, France, India, China, Russia,
+        and Spain &mdash; films by Kurosawa, Ozu, Mizoguchi, Satyajit Ray,
+        De Sica, Bu&ntilde;uel, and Tarkovsky among them, across %(nlang)d
+        languages beyond English. These titles are offered for non-exclusive
+        licensing across streaming, broadcast, and digital platforms, with
+        territory and term negotiated per deal.</p>
 
-      <p><a class="btn btn-solid" href="catalog.html">Browse the full catalog</a></p>
+      <h2>Represented catalogs</h2>
+      <p>%(bf)d titles for Blue Finch Film Releasing &mdash; contemporary
+        independent features, weighted to the 2010s and 2020s, led by horror,
+        drama, and thriller. %(sc)d titles for SC Films International &mdash;
+        live action and family animation, with documentary and genre titles
+        alongside. We hold no assumed rights position on these: availability,
+        territory, and terms are confirmed per inquiry.</p>
+
+      <p>We are a licensing and distribution operation only &mdash; this site is
+        a catalog and a contact form, not a streaming service.</p>
+
+      <p><a class="btn btn-solid" href="catalog.html">Browse the catalogs</a></p>
     </div>
   </div>
 </section>
 """ % {
-        "total": total,
+        "total": len(films),
+        "cfv": len(cfv),
+        "bf": len(in_catalog(films, "blue-finch")),
+        "sc": len(in_catalog(films, "sc-films")),
         "nlang": len(langs),
     }
-    return page("About — %s" % SITE_NAME, body, "about.html")
+    return page("About \u2014 %s" % SITE_NAME, body, "about.html")
 
 
 # --------------------------------------------------------------------------
@@ -750,13 +971,14 @@ def main():
 
     write("index.html", build_home(films))
     write("catalog.html", build_catalog(films))
+    write("browse.html", build_browse(films))
     write("licensing.html", build_licensing(films))
     write("about.html", build_about(films))
     for f in films:
         write(os.path.join("films", f["slug"] + ".html"), build_film(f, films))
 
     # sitemap + robots help buyers' procurement teams find titles by search
-    urls = ["index.html", "catalog.html", "licensing.html", "about.html"]
+    urls = ["index.html", "catalog.html", "browse.html", "licensing.html", "about.html"]
     urls += ["films/%s.html" % f["slug"] for f in films]
     if SITE_BASE:
         write(

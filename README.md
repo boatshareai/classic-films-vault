@@ -1,8 +1,10 @@
 # Classic Films Vault — licensing site
 
-A static catalog-and-contact site for the Classic Films Vault library.
-165 titles, one page per title, searchable/filterable browse table,
-and a licensing inquiry form that sends two emails.
+A static catalog-and-contact site for three represented catalogs — Classic
+Films Vault (165), Blue Finch Film Releasing (209), and SC Films
+International (89). 463 titles, one page per title, a shared
+searchable/filterable browse table, and a licensing inquiry form that sends
+two emails.
 
 No backend, no database, no video hosting, no user accounts.
 
@@ -32,10 +34,35 @@ standard library only. No `npm install`, no build framework.
 
 ---
 
-## Updating the catalog
+## Catalogs
 
-`data/catalog.csv` is the source of truth. Edit it in Excel, Numbers, Google
-Sheets, or any text editor, then rebuild:
+Each catalog is its own CSV under `data/`, registered in the `CATALOGS` list
+at the top of `build.py`:
+
+| Catalog | File | Slug prefix |
+|---|---|---|
+| Classic Films Vault | `data/catalog.csv` | *(none)* |
+| Blue Finch Film Releasing | `data/blue-finch.csv` | `bf-` |
+| SC Films International | `data/sc-films.csv` | `sc-` |
+
+Separate files so one agency's data can never disturb another's, and so
+`data/catalog.csv` stays exactly what it was before the agency catalogs
+arrived. Classic Films Vault keeps an empty slug prefix because its URLs are
+already published and must not move; the agency catalogs are prefixed so the
+titles carried by *both* agencies get distinct pages.
+
+Adding a fourth catalog is a new CSV plus one entry in `CATALOGS` — the
+landing cards, the catalog filter, the counts, and the "Represented by" tags
+all derive from that list.
+
+`catalog.html` is the landing view (one card per catalog); `browse.html` is
+the single browse UI shared by all of them, deep-linkable as
+`browse.html?catalog=blue-finch`.
+
+## Updating a catalog
+
+The CSVs under `data/` are the source of truth. Edit one in Excel, Numbers,
+Google Sheets, or any text editor, then rebuild:
 
 ```bash
 python3 build.py
@@ -58,6 +85,7 @@ python3 build.py
 | `territory` | Territory of an existing licence. Shown only when `status` is `Licensed`. |
 | `credit` | Optional note, e.g. `Directed by John Ford`. |
 | `publish` | `yes` to include the title on the site, `no` to hold it back without deleting the row. Blank counts as `yes`. |
+| `cross_listed` | `yes` if the title appears in both agency catalogs. A neutral marker only — it is not rendered anywhere on the site. |
 
 Every current row is `publish=yes`; the column is there for when you need to
 pull a title off the site temporarily without losing its data.
@@ -65,13 +93,46 @@ pull a title off the site temporarily without losing its data.
 Adding a new genre, language, or decade needs no code change — the filter
 options are generated from whatever is in the CSV.
 
+### Known data gaps, carried honestly
+
+The agency catalogs arrived thinner than the Classic Films Vault data, and
+none of it is filled in by inference:
+
+- **No loglines** for any of the 298 agency titles. The browse table shows
+  "Not listed"; the film page says so in a sentence.
+- **No runtimes** for any of the 298. The runtime filter's "Not listed"
+  option finds them.
+- **No year** for 85 of the 89 SC Films titles. The decade filter has a
+  "Not listed" option, matching how runtime and language already behave.
+- **Genre labels are verbatim single strings** ("Live Action", "Crime
+  Thriller", "Family Animation") rather than the `;`-separated multi-genre
+  used by Classic Films Vault. They are *not* split on whitespace — "Live
+  Action" is a format, not Live + Action — so the genre filter lists each
+  label as the source wrote it. Rolling "Horror Thriller" up under "Horror"
+  would be a taxonomy decision, not a code fix.
+- **18 titles appear in both agency catalogs**, imported twice and tagged
+  `cross_listed=yes`, deliberately not merged or deduplicated. Several
+  disagree on year between the two lists. Which agency holds current rights
+  is a human call; see `PRELAUNCH.local.md` (gitignored).
+
+### Rights positions
+
+`status` drives the badge and is not interchangeable:
+
+| Status | Means |
+|---|---|
+| `Available` | No current licence on the title. |
+| `Licensed` | Carries a non-exclusive licence with another platform; still licensable. |
+| `Represented` | The agency carries the title. **Not** a claim that it is unencumbered — availability is confirmed per inquiry. |
+
 ### Regenerating from the spreadsheets
 
 `data/catalog.csv` was generated from the two source workbooks in the parent
 folder:
 
 ```bash
-python3 etl.py     # overwrites data/catalog.csv
+python3 etl.py              # overwrites data/catalog.csv
+python3 etl_represented.py  # overwrites blue-finch.csv and sc-films.csv
 ```
 
 `etl.py` merges `ClassicFilms_Usable4YouTube.xlsx` (70 titles under the VA

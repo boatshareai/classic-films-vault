@@ -4,3 +4,7 @@ dist/
 .DS_Store
 *.pyc
 __pycache__/
+
+# Local working notes — never committed
+PRELAUNCH.local.md
+*.local.md
