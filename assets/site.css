@@ -1,0 +1,1115 @@
+/* Classic Films Vault — licensing portfolio
+   Palette: steel and brass, taken from the vault logo. Editorial, not kitsch. */
+
+:root {
+  /* Steel-and-brass system, pulled from the vault logo. */
+  --steel-dk: #1a1a1a;   /* outer rim — header, hero, footer */
+  --steel: #242322;      /* body charcoal / text on light */
+  --steel-mid: #2e2d2b;  /* raised surfaces on dark */
+  --brass: #c9a15c;      /* the clapperboard — the single accent */
+  --brass-lt: #dcbb82;   /* hover only, not a second accent */
+  --brass-ink: #7f6025;   /* same hue, darkened to pass contrast on light */
+  --brass-dim: rgba(201, 161, 92, 0.14);
+  --gray: #6b6862;       /* brushed steel — borders, dividers, muted text */
+  --light: #e8e6e1;      /* warm light gray, never pure white */
+  --light-2: #f1efe8;    /* raised cards on light + text on dark */
+  --rule: #cfccc4;       /* dividers on light */
+  --ink-soft: #5d5a55;
+
+  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua",
+    Georgia, serif;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+
+  --wrap: 1140px;
+  --shadow: 0 1px 2px rgba(26, 26, 26, 0.07), 0 8px 24px rgba(26, 26, 26, 0.09);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--light);
+  color: var(--steel);
+  font: 16px/1.6 var(--sans);
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--serif);
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  margin: 0 0 0.5em;
+}
+
+a {
+  color: var(--brass-ink);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+a:hover {
+  color: #6f5420;
+}
+
+.wrap {
+  max-width: var(--wrap);
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.skip {
+  position: absolute;
+  left: -9999px;
+}
+.skip:focus {
+  left: 8px;
+  top: 8px;
+  z-index: 100;
+  background: var(--light-2);
+  padding: 10px 14px;
+  border-radius: 4px;
+}
+
+/* ---------- header ---------- */
+
+.site-head {
+  background: var(--steel-dk);
+  color: var(--light);
+  border-bottom: 3px solid var(--brass);
+}
+
+.site-head .wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  min-height: 88px;
+  flex-wrap: wrap;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  text-decoration: none;
+  padding: 10px 0;
+  color: var(--light-2);
+}
+.brand img {
+  width: 68px;
+  height: 68px;
+  display: block;
+  flex: 0 0 auto;
+}
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.brand-name {
+  font-family: var(--serif);
+  font-size: 21px;
+  letter-spacing: 0.01em;
+  line-height: 1.1;
+}
+.brand:hover .brand-name {
+  color: #fff;
+}
+.brand .mark {
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--brass);
+  line-height: 1.1;
+}
+
+.nav {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  align-items: center;
+  padding-bottom: 4px;
+}
+.nav a {
+  color: var(--rule);
+  text-decoration: none;
+  font-size: 14px;
+  padding: 8px 12px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+.nav a:hover {
+  background: rgba(241, 239, 232, 0.1);
+  color: var(--light-2);
+}
+.nav a[aria-current="page"] {
+  color: var(--brass-lt);
+  box-shadow: inset 0 -2px 0 var(--brass);
+}
+.cta-short {
+  display: none;
+}
+.nav .cta {
+  background: var(--brass);
+  color: var(--steel-dk);
+  font-weight: 600;
+  margin-left: 6px;
+}
+.nav .cta:hover {
+  background: var(--brass-lt);
+  color: var(--steel-dk);
+}
+
+/* ---------- hero ---------- */
+
+.hero {
+  background: var(--steel-dk);
+  color: var(--light);
+  padding: 72px 0 64px;
+  position: relative;
+  overflow: hidden;
+}
+.hero > .wrap {
+  max-width: 900px;
+}
+.eyebrow {
+  font-size: 12px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--brass-lt);
+  margin: 0 0 18px;
+  font-weight: 600;
+}
+.hero h1 {
+  font-size: clamp(34px, 6vw, 58px);
+  margin-bottom: 18px;
+  color: var(--light-2);
+}
+.hero .pitch {
+  font-size: clamp(17px, 2.2vw, 21px);
+  line-height: 1.5;
+  color: var(--rule);
+  max-width: 40em;
+  margin: 0 0 32px;
+}
+.hero-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.btn {
+  display: inline-block;
+  font: 600 15px/1 var(--sans);
+  padding: 14px 24px;
+  border-radius: 3px;
+  text-decoration: none;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+.btn-gold {
+  background: var(--brass);
+  color: var(--steel-dk);
+  border-color: var(--brass);
+}
+.btn-gold:hover {
+  background: var(--brass-lt);
+  color: var(--steel-dk);
+}
+.btn-ghost {
+  border-color: rgba(241, 239, 232, 0.4);
+  color: var(--light);
+}
+.btn-ghost:hover {
+  border-color: var(--light);
+  background: rgba(241, 239, 232, 0.08);
+  color: var(--light-2);
+}
+.btn-solid {
+  background: var(--brass);
+  color: var(--steel-dk);
+  border-color: var(--brass);
+}
+.btn-solid:hover {
+  background: var(--brass-lt);
+  color: var(--steel-dk);
+}
+
+/* ---------- sections ---------- */
+
+.section {
+  padding: 64px 0;
+}
+.section-cream {
+  background: var(--light);
+}
+.section-white {
+  background: var(--light-2);
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+}
+.section h2 {
+  font-size: clamp(24px, 3.4vw, 34px);
+}
+/* On the catalog/licensing/about pages the section heading *is* the page
+   title, so it is an h1 and carries a little more weight. */
+.section h1 {
+  font-size: clamp(28px, 4.2vw, 40px);
+}
+.section > .wrap > .lede {
+  color: var(--ink-soft);
+  max-width: 46em;
+  font-size: 17px;
+  margin-top: -4px;
+}
+
+.rule-head {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+.rule-head h1,
+.rule-head h2 {
+  margin: 0;
+  white-space: nowrap;
+}
+.rule-head::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--rule);
+}
+
+/* ---------- highlight tiles ---------- */
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 18px;
+}
+.tile {
+  background: var(--light-2);
+  border: 1px solid var(--rule);
+  border-top: 3px solid var(--brass);
+  border-radius: 3px;
+  padding: 24px 22px 20px;
+  text-decoration: none;
+  color: var(--steel);
+  display: block;
+  box-shadow: var(--shadow);
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+.tile:hover {
+  transform: translateY(-2px);
+  border-top-color: var(--brass);
+  color: var(--steel);
+}
+.tile .count {
+  font-family: var(--serif);
+  font-size: 40px;
+  line-height: 1;
+  color: var(--brass-ink);
+  display: block;
+}
+.tile .label {
+  font-family: var(--serif);
+  font-size: 19px;
+  margin: 10px 0 6px;
+  display: block;
+}
+.tile .sub {
+  font-size: 13px;
+  color: var(--ink-soft);
+  line-height: 1.45;
+}
+
+/* decade strip */
+.decades {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 26px;
+}
+.decade-chip {
+  background: var(--light-2);
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-size: 14px;
+  text-decoration: none;
+  color: var(--steel);
+}
+.decade-chip:hover {
+  border-color: var(--brass-ink);
+  color: var(--brass-ink);
+}
+.decade-chip b {
+  font-weight: 600;
+  color: var(--brass-ink);
+}
+
+/* ---------- catalog controls ---------- */
+
+.filters {
+  background: var(--light-2);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 18px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow);
+}
+.filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 14px;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.field label {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+.field input,
+.field select,
+.field textarea {
+  font: 15px/1.4 var(--sans);
+  padding: 10px 11px;
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  background: var(--light-2);
+  color: var(--steel);
+  width: 100%;
+}
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  outline: 2px solid var(--brass-ink);
+  outline-offset: -1px;
+  border-color: var(--brass-ink);
+}
+.search-field {
+  grid-column: 1 / -1;
+}
+
+.filter-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--rule);
+  flex-wrap: wrap;
+}
+.result-count {
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+.result-count b {
+  color: var(--steel);
+  font-weight: 600;
+}
+.link-btn {
+  background: none;
+  border: none;
+  color: var(--brass-ink);
+  font: 14px var(--sans);
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 4px;
+}
+
+/* ---------- catalog table ---------- */
+
+.table-scroll {
+  overflow-x: auto;
+  background: var(--light-2);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  box-shadow: var(--shadow);
+}
+table.catalog {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+  min-width: 760px;
+}
+table.catalog th {
+  text-align: left;
+  font: 600 11px/1.3 var(--sans);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--rule);
+  background: var(--steel-dk);
+  padding: 12px 14px;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+table.catalog th button {
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+  padding: 0;
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+}
+table.catalog th button:hover {
+  color: var(--brass-lt);
+}
+table.catalog td {
+  padding: 13px 14px;
+  border-top: 1px solid var(--rule);
+  vertical-align: top;
+}
+table.catalog tbody tr:hover {
+  background: rgba(201, 161, 92, 0.07);
+}
+table.catalog .c-title {
+  font-family: var(--serif);
+  font-size: 17px;
+  min-width: 190px;
+}
+table.catalog .c-title a {
+  text-decoration: none;
+}
+table.catalog .c-title a:hover {
+  text-decoration: underline;
+}
+table.catalog .c-logline {
+  color: var(--ink-soft);
+  font-size: 14px;
+  line-height: 1.45;
+  max-width: 420px;
+}
+table.catalog .c-num {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.muted {
+  color: #86827b;
+}
+
+/* ---------- status badge ---------- */
+
+.badge {
+  display: inline-block;
+  font: 600 11px/1 var(--sans);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 6px 10px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+.badge-available {
+  background: var(--brass-dim);
+  color: #7a5c22;
+  border: 1px solid rgba(201, 161, 92, 0.55);
+}
+.badge-licensed {
+  background: rgba(107, 104, 98, 0.12);
+  color: #55524c;
+  border: 1px solid rgba(107, 104, 98, 0.45);
+}
+.badge-lg {
+  font-size: 13px;
+  padding: 9px 14px;
+}
+
+/* The film-page hero is dark, so the badges need the inverse treatment —
+   the light-surface colours above are unreadable on steel. */
+.film-head .badge-available {
+  background: var(--brass-dim);
+  color: var(--brass-lt);
+  border-color: rgba(201, 161, 92, 0.6);
+}
+.film-head .badge-licensed {
+  background: rgba(241, 239, 232, 0.09);
+  color: var(--light);
+  border-color: rgba(241, 239, 232, 0.34);
+}
+
+.empty {
+  padding: 48px 20px;
+  text-align: center;
+  color: var(--ink-soft);
+}
+
+/* ---------- film detail ---------- */
+
+.film-head {
+  background: var(--steel-dk);
+  color: var(--light);
+  padding: 48px 0 44px;
+}
+.crumbs {
+  font-size: 13px;
+  margin-bottom: 20px;
+  color: rgba(241, 239, 232, 0.7);
+}
+.crumbs a {
+  color: var(--brass-lt);
+}
+.film-head h1 {
+  font-size: clamp(30px, 5vw, 46px);
+  color: var(--light-2);
+  margin-bottom: 14px;
+}
+.film-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  font-size: 15px;
+  color: var(--rule);
+  align-items: center;
+  margin-bottom: 22px;
+}
+.film-meta .sep {
+  color: rgba(241, 239, 232, 0.35);
+}
+
+.film-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(260px, 1fr);
+  gap: 44px;
+  padding: 52px 0 72px;
+  align-items: start;
+}
+.film-body h2 {
+  font-size: 15px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-family: var(--sans);
+  color: var(--ink-soft);
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+.synopsis {
+  font-size: 18px;
+  line-height: 1.65;
+  margin: 0 0 32px;
+}
+.spec {
+  border-top: 1px solid var(--rule);
+  margin: 0;
+}
+.spec div {
+  display: flex;
+  gap: 16px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--rule);
+  font-size: 15px;
+}
+.spec dt {
+  flex: 0 0 130px;
+  color: var(--ink-soft);
+}
+.spec dd {
+  margin: 0;
+  flex: 1;
+}
+
+.aside-card {
+  background: var(--light-2);
+  border: 1px solid var(--rule);
+  border-top: 3px solid var(--brass);
+  border-radius: 3px;
+  padding: 24px 22px;
+  box-shadow: var(--shadow);
+  position: sticky;
+  top: 20px;
+}
+.aside-card h2 {
+  margin-top: 0;
+}
+.aside-card p {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+.aside-card .btn {
+  width: 100%;
+  text-align: center;
+  margin-top: 6px;
+}
+
+.tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.tag {
+  font-size: 12px;
+  background: var(--rule);
+  border-radius: 3px;
+  padding: 5px 9px;
+  color: var(--steel);
+  text-decoration: none;
+}
+.tag:hover {
+  background: var(--brass-lt);
+  color: var(--steel-dk);
+}
+
+/* ---------- prose / forms ---------- */
+
+.prose {
+  max-width: 44em;
+}
+.prose p {
+  font-size: 17px;
+  line-height: 1.7;
+}
+.prose h2 {
+  font-size: 26px;
+  margin-top: 40px;
+}
+
+.form-card {
+  background: var(--light-2);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 28px;
+  box-shadow: var(--shadow);
+  max-width: 680px;
+}
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+.form-grid .full {
+  grid-column: 1 / -1;
+}
+.req {
+  color: var(--brass-ink);
+}
+.hint {
+  font-size: 13px;
+  color: var(--ink-soft);
+  margin: 0;
+}
+.form-card textarea {
+  min-height: 92px;
+  resize: vertical;
+}
+.form-foot {
+  margin-top: 22px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.notice {
+  border-radius: 3px;
+  padding: 16px 18px;
+  font-size: 15px;
+  line-height: 1.55;
+  margin: 0 0 22px;
+}
+.notice-ok {
+  background: var(--brass-dim);
+  border: 1px solid rgba(201, 161, 92, 0.5);
+  color: #6f5420;
+}
+/* Errors keep a red: it is a functional signal, not decoration. Desaturated
+   so it still sits inside the steel-and-brass system. */
+.notice-err {
+  background: #f4e6e2;
+  border: 1px solid #d3aea4;
+  color: #8f3323;
+}
+.notice-warn {
+  background: rgba(107, 104, 98, 0.1);
+  border: 1px solid rgba(107, 104, 98, 0.4);
+  color: #4e4b46;
+}
+[hidden] {
+  display: none !important;
+}
+
+.err-text {
+  color: #8f3323;
+  font-size: 13px;
+  margin: 0;
+}
+.field input[aria-invalid="true"],
+.field select[aria-invalid="true"] {
+  border-color: #8f3323;
+}
+
+/* ---------- footer ---------- */
+
+.site-foot {
+  background: var(--steel-dk);
+  color: rgba(241, 239, 232, 0.75);
+  padding: 40px 0;
+  font-size: 14px;
+  margin-top: 0;
+}
+.site-foot .wrap {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.site-foot a {
+  color: var(--brass-lt);
+}
+.site-foot .fnav {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+/* ---------- responsive ---------- */
+
+@media (max-width: 860px) {
+  .film-body {
+    grid-template-columns: 1fr;
+    gap: 32px;
+    padding-top: 36px;
+  }
+  .aside-card {
+    position: static;
+  }
+  .hero {
+    padding: 52px 0 48px;
+  }
+  .section {
+    padding: 48px 0;
+  }
+}
+
+@media (max-width: 620px) {
+  /* The full-size mark plus a wrapping nav ate a quarter of the viewport;
+     scale the lockup down so content starts higher. */
+  .site-head .wrap {
+    min-height: 0;
+    padding-top: 6px;
+    padding-bottom: 8px;
+  }
+  .brand {
+    padding: 6px 0;
+    gap: 10px;
+  }
+  .brand img {
+    width: 46px;
+    height: 46px;
+  }
+  .brand-name {
+    font-size: 18px;
+  }
+  .brand .mark {
+    font-size: 9px;
+    letter-spacing: 0.16em;
+  }
+  .nav {
+    gap: 2px;
+  }
+  .wrap {
+    padding: 0 16px;
+  }
+  .nav a {
+    font-size: 13px;
+    padding: 7px 6px;
+  }
+  .nav .cta {
+    margin-left: 2px;
+  }
+  /* Short label keeps the nav on one row at 375px */
+  .cta-long {
+    display: none;
+  }
+  .cta-short {
+    display: inline;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  .site-head .wrap {
+    justify-content: flex-start;
+  }
+  .nav a {
+    padding: 8px 10px;
+  }
+  .rule-head h1,
+  .rule-head h2 {
+    white-space: normal;
+  }
+
+  /* Table collapses to stacked records — keeps the full catalog usable
+     on a phone without a horizontal scroll. */
+  .table-scroll {
+    border: none;
+    box-shadow: none;
+    background: none;
+    overflow: visible;
+  }
+  table.catalog {
+    min-width: 0;
+  }
+  table.catalog thead {
+    display: none;
+  }
+  table.catalog,
+  table.catalog tbody,
+  table.catalog tr,
+  table.catalog td {
+    display: block;
+    width: auto;
+  }
+  table.catalog tr {
+    background: var(--light-2);
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--brass);
+    border-radius: 3px;
+    margin-bottom: 12px;
+    padding: 14px 16px;
+  }
+  table.catalog td {
+    border: none;
+    padding: 2px 0;
+  }
+  table.catalog td.c-logline {
+    max-width: none;
+    padding-top: 8px;
+  }
+  table.catalog td[data-k]::before {
+    content: attr(data-k) " ";
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-right: 6px;
+  }
+  table.catalog td.c-title::before,
+  table.catalog td.c-logline::before,
+  table.catalog td.c-status::before {
+    content: none;
+  }
+  table.catalog td.c-status {
+    padding-top: 10px;
+  }
+}
+
+@media print {
+  .site-head,
+  .site-foot,
+  .filters,
+  .aside-card {
+    display: none;
+  }
+  body {
+    background: #fff;
+  }
+}
+
+/* ---------- featured carousel ---------- */
+
+.featured-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+}
+.featured-head h2 {
+  margin: 0;
+}
+.featured-head .all-link {
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.carousel {
+  position: relative;
+}
+.carousel-track {
+  display: flex;
+  gap: 18px;
+  overflow-x: auto;
+  align-items: flex-start;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  /* no side padding: it leaves the track resting at scrollLeft 2, which
+     breaks the at-the-start check in carousel.js */
+  padding: 4px 0 12px;
+  /* keep the native scrollbar out of the way without blocking scrolling */
+  scrollbar-width: none;
+}
+.carousel-track::-webkit-scrollbar {
+  display: none;
+}
+.carousel-track:focus-visible {
+  outline: 2px solid var(--brass-ink);
+  outline-offset: 4px;
+  border-radius: 3px;
+}
+
+.film-card {
+  flex: 0 0 auto;
+  width: 186px;
+  scroll-snap-align: start;
+  text-decoration: none;
+  color: var(--steel);
+  display: block;
+}
+.film-card:hover {
+  color: var(--steel);
+}
+
+/* No poster art is licensed for these titles, so the card uses a typographic
+   placeholder in the brand's own idiom rather than borrowed key art. */
+.poster {
+  position: relative;
+  aspect-ratio: 2 / 3;
+  background: var(--steel-dk);
+  border: 1px solid rgba(201, 161, 92, 0.28);
+  border-radius: 3px;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+.film-card:hover .poster {
+  border-color: var(--brass);
+  transform: translateY(-3px);
+}
+/* clapperboard stripe, echoing the logo */
+.poster::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 14px;
+  background: repeating-linear-gradient(
+    -60deg,
+    var(--brass) 0 12px,
+    var(--steel-dk) 12px 24px
+  );
+  opacity: 0.85;
+}
+.poster .mono {
+  font-family: var(--serif);
+  font-size: 76px;
+  line-height: 1;
+  color: rgba(201, 161, 92, 0.22);
+  user-select: none;
+}
+.poster .status-dot {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  font: 600 9px/1 var(--sans);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 4px 6px;
+  border-radius: 2px;
+  background: rgba(26, 26, 26, 0.85);
+  border: 1px solid rgba(241, 239, 232, 0.3);
+  color: var(--light);
+}
+.poster .status-dot.is-available {
+  border-color: rgba(201, 161, 92, 0.6);
+  color: var(--brass-lt);
+}
+
+.film-card .cap {
+  padding: 11px 2px 0;
+}
+.film-card .cap b {
+  font-family: var(--serif);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.25;
+  /* A 40-character title ran to four lines and stretched every card in the
+     row to match. Cap it; the full title is on the film's own page and in
+     the link's title attribute. */
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.film-card:hover .cap b {
+  color: var(--brass-ink);
+}
+.film-card .cap span {
+  display: block;
+  font-size: 13px;
+  color: var(--ink-soft);
+  margin-top: 3px;
+  font-variant-numeric: tabular-nums;
+}
+
+.carousel-btn {
+  position: absolute;
+  top: 92px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--rule);
+  background: var(--light-2);
+  color: var(--steel);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  box-shadow: var(--shadow);
+  font-size: 17px;
+  line-height: 1;
+  z-index: 2;
+}
+.carousel-btn:hover:not(:disabled) {
+  border-color: var(--brass);
+  color: var(--brass-ink);
+}
+.carousel-btn:disabled {
+  opacity: 0;
+  pointer-events: none;
+}
+.carousel-btn.prev {
+  left: -18px;
+}
+.carousel-btn.next {
+  right: -18px;
+}
+
+@media (max-width: 620px) {
+  .film-card {
+    width: 142px;
+  }
+  .poster .mono {
+    font-size: 58px;
+  }
+  /* touch devices swipe; the buttons just take up room */
+  .carousel-btn {
+    display: none;
+  }
+}
