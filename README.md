@@ -294,19 +294,31 @@ centre-cropped.
 
 ## Featured titles
 
-The home-page carousel sits directly below the hero — the "165 titles" claim
-lands harder when the next thing you see is actual marquee titles.
+The home-page carousel sits directly below the hero, ahead of the stat
+blocks — the combined-total claim lands harder when the next thing you see is
+twelve actual titles, spread across all three catalogs.
 
-Edit the `FEATURED` list at the top of `build.py` to change what appears.
-Titles are matched against `data/catalog.csv` by name, and **the build fails
-loudly** if one stops resolving — so renaming or unpublishing a film in the
-CSV can't silently leave an empty card.
+Edit the `FEATURED` list at the top of `build.py`. Each entry is a
+`(title, catalog key)` pair: the catalog is part of the key because a title
+can legitimately exist in more than one catalog. Entries are resolved against
+the CSVs at build time — the carousel never holds a second copy of the data —
+and **the build fails loudly** if a pair stops resolving, so renaming or
+unpublishing a film can't silently leave an empty card.
 
-There is no key art for these films, so each card uses a typographic
-placeholder in the brand's own idiom: a clapperboard stripe, the title's
-initial ghosted in brass, and the licensing status. Dropping in real posters
-later means replacing the `.poster` contents in `build_featured()` with an
-`<img>` — the card, carousel, and layout don't change.
+Each card shows the key art, title, year, licensing status, and the same
+Represented by badge used on film detail pages.
+
+### Poster art
+
+`build_featured()` reads an optional **`poster`** column. Put a filename in it
+and add the file to `assets/posters/`, and the card uses the real key art;
+leave it out and the card falls back to a typographic placeholder in the
+brand's idiom — clapperboard stripe, the title's initial ghosted in brass.
+
+No catalog currently has a `poster` column, so every card is a placeholder
+today. Adding art is a per-title data edit, not a code change: add the column
+to whichever CSV, fill in the rows you have art for, drop the images in, and
+rebuild. Cards mix freely — art and placeholder side by side is fine.
 
 The track is a native scroll-snap scroller, so touch swipe and keyboard
 scrolling work even if `carousel.js` never loads; the script only adds the

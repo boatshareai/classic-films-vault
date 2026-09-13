@@ -106,25 +106,31 @@ VOLUME_OPTIONS = [
 HIGHLIGHTS = [
     ("Westerns", ["Western"], "Singing cowboys, cavalry pictures, and late-cycle revisionist entries."),
     ("Mystery & noir", ["Mystery", "Film-Noir", "Crime"], "Rathbone-era Holmes, Fritz Lang thrillers, and hard-boiled studio noir."),
-    ("Horror & sci-fi", ["Horror", "Sci-Fi"], "Corman-Poe gothics, Mario Bava, and drive-in creature features."),
+    # Now majority Blue Finch, so the description can no longer name only the
+    # Classic Films Vault titles.
+    ("Horror & sci-fi", ["Horror", "Sci-Fi"], "Corman-Poe gothics and drive-in creature features through to contemporary independent horror."),
     ("International", None, "Kurosawa, Ozu, Mizoguchi, Ray, Buñuel, Tarkovsky, and De Sica."),
 ]
 
 
-# Marquee titles for the home-page carousel, in display order. Matched by
-# title against the catalog; build fails loudly if one stops resolving, so a
-# rename in the CSV can't silently empty a card.
+# Marquee titles for the home-page carousel, in display order. Each entry is
+# (title, catalog key): the catalog is part of the key because a title can
+# legitimately exist in more than one catalog. Resolved against the CSVs at
+# build time -- never a second copy of the data -- and the build fails if a
+# pair stops resolving.
 FEATURED = [
-    "Bicycle Thieves",
-    "Stagecoach",
-    "M",
-    "Charade",
-    "Foreign Correspondent",
-    "The Rules of the Game",
-    "Women on the Verge of a Nervous Breakdown",
-    "Pather Panchali",
-    "Throne of Blood",
-    "The Outlaw",
+    ("Bicycle Thieves", "classic-films-vault"),
+    ("A Bronx Tale", "blue-finch"),
+    ("Stagecoach", "classic-films-vault"),
+    ("Monster Island (aka Orang Ikan)", "sc-films"),
+    ("M", "classic-films-vault"),
+    ("Papillon", "blue-finch"),
+    ("Charade", "classic-films-vault"),
+    ("Dragonkeeper", "sc-films"),
+    ("Dead Man's Shoes", "blue-finch"),
+    ("Foreign Correspondent", "classic-films-vault"),
+    ("Frances Ha", "blue-finch"),
+    ("Pather Panchali", "classic-films-vault"),
 ]
 
 
@@ -271,31 +277,54 @@ def page(title, body, current, depth=0, description=""):
 
 
 def build_featured(films):
-    by_title = {f["title"].lower(): f for f in films}
+    by_key = {(f["title"].strip().lower(), f["catalog"]): f for f in films}
     cards = []
-    for want in FEATURED:
-        f = by_title.get(want.lower())
+    for want, cat in FEATURED:
+        f = by_key.get((want.strip().lower(), cat))
         if f is None:
             raise SystemExit(
-                "featured title %r is not in the catalog (renamed, removed, or "
-                "publish=no). Fix FEATURED in build.py or data/catalog.csv." % want
+                "featured title %r is not in the %s catalog (renamed, removed, "
+                "or publish=no). Fix FEATURED in build.py or the catalog CSV."
+                % (want, cat)
             )
-        avail = f["status"] == "Available"
+        # Optional `poster` column: drop a filename in and the card uses the
+        # real key art instead of the placeholder. No row has one yet.
+        poster = f.get("poster", "").strip()
+        if poster:
+            art = (
+                '<img src="assets/posters/%s" alt="" loading="lazy" '
+                'width="300" height="450">' % e(poster)
+            )
+        else:
+            art = '<span class="mono" aria-hidden="true">%s</span>' % e(
+                monogram(f["title"])
+            )
+        # The full badge wording ("Licensed - non-exclusive") is too wide for a
+        # card pill; the bare status reads fine at this size.
+        bcls = badge(f["status"])[0]
+        btxt = f["status"] or "Available"
         cards.append(
-            """        <a class="film-card" href="films/%(slug)s.html" title="%(title)s (%(year)s)">
+            """        <a class="film-card" href="films/%(slug)s.html" title="%(title)s">
           <span class="poster">
-            <span class="mono" aria-hidden="true">%(mono)s</span>
-            <span class="status-dot%(acls)s">%(status)s</span>
+            %(art)s
+            <span class="status-dot %(bcls)s">%(btxt)s</span>
           </span>
-          <span class="cap"><b>%(title)s</b><span>%(year)s</span></span>
+          <span class="cap">
+            <b>%(title)s</b>
+            <span class="cap-year">%(year)s</span>
+            <span class="rep-tag rep-tag-sm"><span>Represented by</span> %(cat)s</span>
+          </span>
         </a>"""
             % {
                 "slug": e(f["slug"]),
-                "mono": e(monogram(f["title"])),
-                "acls": " is-available" if avail else "",
-                "status": "Available" if avail else "Licensed",
+                "art": art,
+                "bcls": e(bcls),
+                "btxt": e(btxt),
                 "title": e(f["title"]),
-                "year": e(f["year"]) or "&mdash;",
+                # .muted fails contrast at this size; .cap-year's own colour
+                # passes and this is real information, not decoration.
+                "year": e(f["year"]) or "Year not listed",
+                "cat": e(f["catalog_name"]),
             }
         )
 

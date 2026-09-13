@@ -1021,6 +1021,16 @@ table.catalog .c-num {
   );
   opacity: 0.85;
 }
+.poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+/* the clapperboard stripe is placeholder furniture; hide it behind real art */
+.poster:has(img)::before {
+  display: none;
+}
 .poster .mono {
   font-family: var(--serif);
   font-size: 76px;
@@ -1041,8 +1051,18 @@ table.catalog .c-num {
   border: 1px solid rgba(241, 239, 232, 0.3);
   color: var(--light);
 }
-.poster .status-dot.is-available {
+/* The pill sits on the dark poster, so it needs the dark-surface treatment
+   rather than the light-background badge colours. */
+.poster .status-dot.badge-available {
   border-color: rgba(201, 161, 92, 0.6);
+  color: var(--brass-lt);
+}
+.poster .status-dot.badge-licensed {
+  border-color: rgba(241, 239, 232, 0.34);
+  color: var(--light);
+}
+.poster .status-dot.badge-represented {
+  border: 1px dashed rgba(201, 161, 92, 0.7);
   color: var(--brass-lt);
 }
 
@@ -1065,12 +1085,39 @@ table.catalog .c-num {
 .film-card:hover .cap b {
   color: var(--brass-ink);
 }
-.film-card .cap span {
+.film-card .cap-year {
   display: block;
   font-size: 13px;
   color: var(--ink-soft);
   margin-top: 3px;
   font-variant-numeric: tabular-nums;
+}
+
+/* Same component as the film page's Represented by tag, sized for a card and
+   restyled for a light surface. */
+/* .rep-tag is defined further down the file with its dark-surface colours,
+   so this needs two classes to win on specificity rather than source order. */
+.rep-tag.rep-tag-sm {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin: 9px 0 0;
+  padding: 6px 8px;
+  font-size: 12px;
+  line-height: 1.25;
+  border-color: var(--rule);
+  background: transparent;
+  color: var(--steel);
+}
+.rep-tag.rep-tag-sm span {
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: var(--brass-ink);
+}
+.film-card:hover /* .rep-tag is defined further down the file with its dark-surface colours,
+   so this needs two classes to win on specificity rather than source order. */
+.rep-tag.rep-tag-sm {
+  border-color: var(--brass);
 }
 
 .carousel-btn {
@@ -1109,7 +1156,17 @@ table.catalog .c-num {
   .film-card {
     width: 142px;
   }
-  .poster .mono {
+  .poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+/* the clapperboard stripe is placeholder furniture; hide it behind real art */
+.poster:has(img)::before {
+  display: none;
+}
+.poster .mono {
     font-size: 58px;
   }
   /* touch devices swipe; the buttons just take up room */
